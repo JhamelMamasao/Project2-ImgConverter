@@ -7,32 +7,87 @@ function App() {
   const [count, setCount] = useState(0)
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [type, setType] = useState("png");
 
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    setFile(e.target.files[0])
+     setLoading(true);
   };
 
+  const handleConverter = (e) => {
+  if(!file) return;
   const reader = new FileReader()
 
   reader.onload = function(event) {
     const img = new Image();
     img.onload = function() {
-       const canvas = document.createElement("file")
-       canvas.width = img.width;
-       canvas.height = img.height;
-   const ctx = canvas.getContext('2d');
+        const canvas = document.createElement("canvas")
+        canvas.width = img.width;
+        canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
 
-      // Example: convert to JPEG Blob
+      let mimeType = "image/png";
+      let quality = 1;
+
+      if (type === "jpeg") {
+        mimeType = "image/jpeg";
+        quality = 0.9;
+      } else if (type === "webp") {
+        mimeType = "image/webp";
+        quality = 0.8;
+      }
+
       canvas.toBlob((blob) => {
-        console.log(blob); // pwede mo i-download or i-upload
-      }, 'image/jpeg', 0.9);
+        setResult(URL.createObjectURL(blob))
+        console.log(blob);
+      }, mimeType, quality);
     };
     img.src = event.target.result;
   };
 
   reader.readAsDataURL(file);
+  }
+
+  const handleSaveChange = () => {
+    if (!result || !type) return;
+
+    const link = document.createElement("a");
+    link.href = result;
+    link.download = `converted.${type}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(result)
+  }
+
+  // const reader = new FileReader()
+
+  // reader.onload = function(event) {
+  //   const img = new Image();
+  //   img.onload = function() {
+  //      const canvas = document.createElement("file")
+  //      canvas.width = img.width;
+  //      canvas.height = img.height;
+  //  const ctx = canvas.getContext('2d');
+  //     ctx.drawImage(img, 0, 0);
+
+  //     // Example: convert to JPEG Blob
+  //     canvas.toBlob((blob) => {
+  //       console.log(blob); // pwede mo i-download or i-upload
+  //     }, 'image/jpeg', 0.9);
+  //   };
+  //   img.src = event.target.result;
+  // };
+
+  // reader.readAsDataURL(file);
+
+  
+
+  
 
   return (
     <>
@@ -49,18 +104,18 @@ function App() {
                     onChange={handleFileChange}/>
                     </label>
                     <form className='w-full bg-[#242525] border-2 border-[#292e31] rounded-lg text-white h-12 flex items-center justify-center text-xs p-3'>
-                    <select className='w-full border-none outline-none focus:outline-none focus:ring-0 bg-[#242525]' name="type" id="type">
-                         <option value="volvo">PNG</option>
-                         <option value="volvo">JPEG</option>
-                         <option value="volvo">WEBP</option>
+                    <select value={type} onChange={(e) => setType(e.target.value)} className='w-full border-none outline-none focus:outline-none focus:ring-0 bg-[#242525]' name="type" id="type">
+                         <option value="png">PNG</option>
+                         <option value="jpeg">JPEG</option>
+                         <option value="webp">WEBP</option>
                     </select>
                     </form>
-                    
-                    <button className='w-full bg-[#242525] border-2 border-[#292e31] rounded-lg text-white h-12'>ssss</button>
-                    <button className='w-full bg-[#f1f1f1] border-2 border-[#292e31] rounded-lg h-12'>s</button>
-                                     
+                    <button type="button" onClick={handleConverter} className='w-full bg-[#f1f1f1] border-2 border-[#292e31] rounded-lg h-12 text-xs'>Convert</button>
+
+                    {result && (
+                      <button onClick={handleSaveChange} className='text-xs text-white mt-2' >Download converted file</button>
+                    )}
               </div>
-              
           </div>
         </div>
      </div>
